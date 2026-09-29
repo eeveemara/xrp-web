@@ -1,0 +1,482 @@
+import AppMgr, { EventType } from '@/managers/appmgr';
+import ConnectionMgr from '@/managers/connectionmgr';
+import i18n from '@/utils/i18n';
+import { ConnectionType } from '@/utils/types';
+import Connection, { ConnectionState } from '@connections/connection';
+import TableMgr from '@/managers/tablemgr';
+
+/**
+ * USB Connection - establish USB serial connection to the XRP Robot
+ */
+export class USBConnection extends Connection {
+    // Define USB connection variables
+    private port: SerialPort | undefined = undefined;
+    private reader: ReadableStreamDefaultReader<Uint8Array> | undefined = undefined; // Reference to serial port reader, only one can be locked at a time
+    private writer: WritableStreamDefaultWriter<Uint8Array> | undefined = undefined; // Reference to serial port writer, only one can be locked at a time
+    private Table: TableMgr | undefined = undefined;
+
+    // Define USB connection constants
+    readonly USB_VENDOR_ID_BETA: number = 11914; // For filtering ports during auto or manual selection
+    readonly USB_VENDOR_ID: number = 6991; // For filtering ports during auto or manual selection
+    readonly USB_VENDOR_ID_NANOXRP: number = 0x2e8a; // For filtering ports during auto or manual selection
+    readonly USB_PRODUCT_ID_BETA: number = 5; // For filtering ports during auto or manual selection
+    readonly USB_PRODUCT_ID: number = 70; // For filtering ports during auto or manual selection
+    readonly USB_PRODUCT_ID_NANOXRP: number = 0x110a; // For filtering ports during auto or manual selection
+
+    constructor(connMgr: ConnectionMgr) {
+        super();
+        this.connMgr = connMgr;
+        this.isManualConnection = false;
+        this.Table = new TableMgr();
+        if (this.joyStick) this.joyStick.writeToDevice = this.writeToDevice.bind(this);
+
+        // setup USB connection listeners
+        // Check if browser can use WebSerial
+        if ('serial' in navigator) {
+            this.connLogger.debug('This browser supports serial port');
+            // Attempt auto-connect when page validated device plugged in, do not start manual selection menu
+            navigator.serial.addEventListener('connect', () => {
+                this.connLogger.debug('USB Connection: detected connect event');
+                if (this.isManualConnection == false) {
+                    this.tryAutoConnect(true);
+                }
+            });
+
+            // Probably set flags/states when page validated device removed
+            navigator.serial.addEventListener('disconnect', (e) => {
+                const disconnectedPort = e.target as SerialPort;
+
+                // Only display disconnect message if there is a matching port on auto detect or not already disconnected
+                if (
+                    this.checkPortMatching(disconnectedPort) &&
+                    this.connectionStates !== ConnectionState.Disconnected
+                ) {
+                    this.connLogger.debug('User unplugged XRP USB connection cable');
+                    this.writer = undefined;
+                    this.reader = undefined;
+                    this.port = undefined;
+                    this.connectionStates = ConnectionState.Disconnected;
+                    this.onDisconnected();
+                }
+            });
+        } else {
+            this.connLogger.debug(
+                'Serial NOT supported in your browser! Use Microsoft Edge or Google Chrome',
+            );
+            //TODO: send a pub/sub to UI to display this information in a modal dialog
+        }
+    }
+
+    /**
+     * readWorker - this worker read data from the XRP robot
+     */
+    private async readWorker() {
+        while (this.connectionStates === ConnectionState.Connected) {
+            this.connLogger.debug('USB readWorker..');
+            //this.PORT != undefined && this.PORT.readable &&
+            // Check if reader locked (can be locked if try to connect again and port was already open but reader wasn't released)
+            if (this.port && this.port.readable) {
+                if (!this.port.readable.locked) {
+                    this.reader = this.port.readable.getReader();
+                }
+            }
+
+            try {
+                while (true) {
+                    // https://developer.mozilla.org/en-US/docs/Web/API/ReadableStreamDefaultReader/read
+                    if (this.reader != undefined) {
+                        const { value, done } = await this.reader.read();
+                        if (done) {
+                            // Allow the serial port to be closed later.
+                            this.reader.releaseLock();
+                            break;
+                        }
+
+                        // Extract XPP packets and regular data from the incoming stream
+                        const { packets, regularData } = this.extractCompleteXPPPackets(value);
+
+                        // Process complete XPP packets
+                        for (const packet of packets) {
+                            this.processXPPPacket(packet, this.Table);
+                        }
+
+                        // Pass any regular (non-XPP) data to readData for normal processing
+                        if (regularData.length > 0) {
+                            this.readData(regularData);
+                        }
+                    }
+                }
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } catch (err: any) {
+                // TODO: Handle non-fatal read error.
+                if (err.name == 'NetworkError') {
+                    this.connLogger.debug('Device most likely unplugged, handled');
+                    return;
+                    //I think doing numbing is fine as it will see the disconnect in the connectionMgr
+                }
+            }
+            this.connLogger.debug('Current read loop ended!');
+        }
+    }
+
+    /**
+     * checkPortMatching - Returns true if product and vendor ID match for MicroPython, otherwise false #
+     * @param port
+     * @returns
+     */
+    private checkPortMatching(port: SerialPort): boolean {
+        const info = port.getInfo();
+        if (
+            (info.usbProductId == this.USB_PRODUCT_ID && info.usbVendorId == this.USB_VENDOR_ID) ||
+            (info.usbProductId == this.USB_PRODUCT_ID_BETA &&
+                info.usbVendorId == this.USB_VENDOR_ID_BETA) ||
+            (info.usbProductId == this.USB_PRODUCT_ID_NANOXRP &&
+                info.usbVendorId == this.USB_VENDOR_ID_NANOXRP)
+        ) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Attempt to auto-connect to a previously authorized XRP serial port.
+     *
+     * Behavior:
+     *   - If exactly ONE authorized port matches our vendor/product IDs,
+     *     connect to it silently (no UI prompt).
+     *   - If ZERO matching ports are authorized (first-time XRP), or MORE
+     *     THAN ONE matching port is authorized, return false so the caller
+     *     can fall back to navigator.serial.requestPort() — which shows the
+     *     browser's port picker and requires a fresh user gesture.
+     *
+     * The single-port autoselect covers the common case (one XRP previously
+     * authorized) without prompting; the picker covers first-time setup and
+     * disambiguation between multiple boards.
+     *
+     * @param fromCablePlugIn true when Web Serial reported a newly attached
+     * port. That is the only path that can interrupt an active Bluetooth
+     * session (the Connect USB button is hidden while already connected).
+     */
+    private async tryAutoConnect(fromCablePlugIn = false): Promise<boolean> {
+        this.connLogger.debug('Entering tryAutoConnection');
+        if (this.connectionStates === ConnectionState.Busy) {
+            return false;
+        }
+
+        // The port is already open and we hold its writer. Re-running
+        // onConnected() would ask the same WritableStream for a second writer,
+        // which throws, so republish the existing connection instead.
+        if (this.port !== undefined && this.writer !== undefined) {
+            this.connLogger.debug('tryAutoConnect: port already open, reusing it');
+            AppMgr.getInstance().emit(EventType.EVENT_SHOW_SPINNER_CONNECTING, 'connecting-usb');
+            this.connectionStates = ConnectionState.Connected;
+            this.connMgr?.connectCallback(this.connectionStates, ConnectionType.USB);
+            return true;
+        }
+
+        this.connectionStates = ConnectionState.Busy;
+        const rawPorts = await navigator.serial.getPorts();
+        const portList: SerialPort[] = Array.isArray(rawPorts)
+            ? rawPorts
+            : rawPorts
+              ? [rawPorts as SerialPort]
+              : [];
+        const matching = portList.filter((p) => this.checkPortMatching(p));
+
+        if (matching.length !== 1) {
+            this.connLogger.debug(
+                `tryAutoConnect: ${matching.length} matching XRP port(s) — deferring to manual selection`,
+            );
+            this.connectionStates = ConnectionState.Disconnected;
+            return false;
+        }
+
+        this.port = matching[0];
+        this.connectionStates = ConnectionState.Connected;
+        // Show before openPort/handoff so cable autoconnect keeps the spinner
+        // through BLE teardown and REPL/FS init. Navbar ignores this when a
+        // non-spinner dialog (e.g. firmware wizard) already owns the slot.
+        AppMgr.getInstance().emit(EventType.EVENT_SHOW_SPINNER_CONNECTING, 'connecting-usb');
+        if (await this.openPort()) {
+            if (fromCablePlugIn) {
+                await this.connMgr?.handoffBluetoothToUsb();
+            }
+            this.onConnected();
+            this.connectionStates = ConnectionState.Connected;
+            this.connLogger.debug('tryAutoConnect: connected to sole matching port');
+            return true;
+        }
+
+        this.connLogger.debug('tryAutoConnect: openPort failed on sole matching port');
+        this.connectionStates = ConnectionState.Disconnected;
+        AppMgr.getInstance().emit(
+            EventType.EVENT_HIDE_SPINNER_CONNECTING,
+            'hide-connection-spinner',
+        );
+        return false;
+    }
+
+    /**
+     * Public wrapper around tryAutoConnect for callers (e.g. the firmware
+     * install wizard) that want to attempt a silent reconnection without
+     * triggering the navigator.serial.requestPort() fallback that connect()
+     * normally falls through to. Returns true on success.
+     */
+    public async tryAutoConnectIfSingle(): Promise<boolean> {
+        return await this.tryAutoConnect();
+    }
+
+    /**
+     * hasAuthorizedXrpPort - is an XRP currently plugged in on a port this
+     * browser already has permission for? Used to prefer the cable over
+     * Bluetooth without prompting. getPorts() only lists granted ports, so a
+     * match means the cable is in and we can open it silently.
+     */
+    public async hasAuthorizedXrpPort(): Promise<boolean> {
+        if (!('serial' in navigator)) {
+            return false;
+        }
+        try {
+            const rawPorts = await navigator.serial.getPorts();
+            const portList: SerialPort[] = Array.isArray(rawPorts)
+                ? rawPorts
+                : rawPorts
+                  ? [rawPorts as SerialPort]
+                  : [];
+            return portList.some((port) => this.checkPortMatching(port));
+        } catch (error) {
+            this.connLogger.debug(error);
+            return false;
+        }
+    }
+
+    private async openPort(): Promise<boolean> {
+        if (this.port != undefined) {
+            this.connectionStates = ConnectionState.Disconnected;
+            try {
+                await this.port.open({ baudRate: 115200 });
+                return true;
+
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } catch (err: any) {
+                if (err.name == 'InvalidStateError') {
+                    this.connLogger.debug('Port already open, everything is good to go!');
+                    return true;
+                } else if (err.name == 'NetworkError') {
+                    //alert("Opening port failed, is another application accessing this device/port?");
+                    AppMgr.getInstance().emit(EventType.EVENT_ALERT, i18n.t('alertOpenPortFailed'));
+                    this.connLogger.debug(
+                        'Port openning failed, is there another application accessing this device and port?',
+                    );
+                    return false;
+                }
+            }
+        } else {
+            console.error('Port undefined!');
+            return false;
+        }
+        return false;
+    }
+
+    /**
+     * onConnected
+     */
+    private async onConnected() {
+        this.connectionStates = ConnectionState.Connected;
+        if (this.port && this.writer === undefined) {
+            try {
+                this.writer = this.port.writable?.getWriter();
+            } catch (error) {
+                // Someone else holds the writer; keep the existing one rather
+                // than failing the whole connect.
+                this.connLogger.debug(error);
+            }
+        }
+        if (this.connMgr) {
+            this.connMgr.connectCallback(this.connectionStates, ConnectionType.USB);
+        }
+        this.readWorker();
+        //await this.getToNormal();
+        this.lastProgramRan = undefined;
+    }
+
+    /**
+     * onDisconnected
+     */
+    private onDisconnected() {
+        this.connLogger.debug('USB connection is lost');
+        if (this.port != undefined) {
+            //this.disconnect = true;
+            if (this.reader != undefined) {
+                this.reader.cancel();
+                this.reader.releaseLock();
+            }
+            if (this.writer != undefined) {
+                this.writer.releaseLock();
+            }
+            this.port.close();
+
+            this.reader = undefined;
+            this.reader = undefined;
+            this.port = undefined;
+        }
+        this.connectionStates = ConnectionState.Disconnected;
+        this.connMgr?.connectCallback(this.connectionStates, ConnectionType.USB);
+    }
+
+    /**
+     * getToREPL - Make sure the XRP is at the REPL prompt and not running a program.
+     * @returns boolean
+     */
+    public async getToREPL(): Promise<boolean> {
+        if (await this.checkPrompt()) {
+            return true;
+        }
+        return await this.stopTheRobot();
+    }
+
+    /**
+     * isConnection - query connection status
+     */
+    public isConnected(): boolean {
+        return this.connectionStates === ConnectionState.Connected;
+    }
+
+    /**
+     * connection - creates an async connection and return result via promise
+     */
+    public async connect(): Promise<void> {
+        if (this.connectionStates == ConnectionState.Busy) {
+            return;
+        }
+
+        const autoConnected = await this.tryAutoConnect();
+
+        const filters = [
+            { usbVendorId: this.USB_VENDOR_ID_BETA, usbProductId: this.USB_PRODUCT_ID_BETA },
+            { usbVendorId: this.USB_VENDOR_ID, usbProductId: this.USB_PRODUCT_ID },
+            { usbVendorId: this.USB_VENDOR_ID_NANOXRP, usbProductId: this.USB_PRODUCT_ID_NANOXRP },
+        ];
+
+        if (!autoConnected) {
+            this.connLogger.debug('Trying to perform a manual USB cable connection');
+            this.connectionStates = ConnectionState.Busy;
+            this.isManualConnection = true;
+
+            await navigator.serial
+                .requestPort({ filters })
+                .then(async (port) => {
+                    this.port = port;
+                    this.connLogger.debug('Manually connected!');
+                    AppMgr.getInstance().emit(
+                        EventType.EVENT_SHOW_SPINNER_CONNECTING,
+                        'connecting-usb',
+                    );
+                    if (await this.openPort()) {
+                        this.onConnected();
+                    } else {
+                        this.connLogger.debug('Connection FAILED. Check cable and try again');
+                        AppMgr.getInstance().emit(
+                            EventType.EVENT_HIDE_SPINNER_CONNECTING,
+                            'hide-connection-spinner',
+                        );
+                    }
+                })
+                .catch((err) => {
+                    if (err.code === 8) {
+                        this.connLogger.info(err.message);
+                    } else {
+                        throw new Error('can not manually connect using USB cable: ' + err.message);
+                    }
+                    //document.getElementById('IDConnectBTN')!.style.display = "block";
+                    //TODO: Report error
+                });
+            this.isManualConnection = false;
+            if (this.writer === undefined) {
+                // Picker dismissed or the port would not open: onConnected()
+                // never ran, so this is not a connection.
+                this.port = undefined;
+                this.connectionStates = ConnectionState.Disconnected;
+            }
+        }
+
+        this.connLogger.debug('Existing connect');
+    }
+
+    /**
+     * disconnection - disconnect the USB session without hanging the UI.
+     * Closing a Web Serial port can block indefinitely (reader still in read(),
+     * or the Pico resetting on DTR). Always finish within a short timeout.
+     */
+    public async disconnect(): Promise<void> {
+        if (this.connectionStates === ConnectionState.Disconnected && this.port === undefined) {
+            return;
+        }
+        // Stop readWorker before cancelling so it does not immediately re-lock the reader.
+        this.connectionStates = ConnectionState.Disconnected;
+
+        const reader = this.reader;
+        this.reader = undefined;
+        if (reader !== undefined) {
+            try {
+                await this.withTimeout(reader.cancel(), 500);
+            } catch (error) {
+                this.connLogger.debug(error);
+            }
+            try {
+                reader.releaseLock();
+            } catch (error) {
+                this.connLogger.debug(error);
+            }
+        }
+        const writer = this.writer;
+        this.writer = undefined;
+        if (writer !== undefined) {
+            try {
+                writer.releaseLock();
+            } catch (error) {
+                this.connLogger.debug(error);
+            }
+        }
+        const port = this.port;
+        this.port = undefined;
+        if (port) {
+            try {
+                await this.withTimeout(port.close(), 1000);
+            } catch (error) {
+                this.connLogger.debug(error);
+            }
+            this.connLogger.debug('USB connection closed.');
+        }
+        this.connMgr?.connectCallback(this.connectionStates, ConnectionType.USB);
+    }
+
+    private withTimeout(promise: Promise<unknown>, ms: number): Promise<void> {
+        return new Promise((resolve) => {
+            const timer = window.setTimeout(resolve, ms);
+            promise
+                .catch((error) => this.connLogger.debug(error))
+                .finally(() => {
+                    window.clearTimeout(timer);
+                    resolve();
+                });
+        });
+    }
+
+    /**
+     * writeToDevice - write data to device
+     * @param str
+     */
+    public async writeToDevice(str: string | Uint8Array) {
+        this.connLogger.debug('Writing to device' + str);
+        if (this.writer != undefined) {
+            if (typeof str == 'string') {
+                await this.writer.ready;
+                await this.writer.write(this.textEncoder.encode(str));
+            } else {
+                await this.writer.ready;
+                await this.writer.write(str);
+            }
+        }
+    }
+}

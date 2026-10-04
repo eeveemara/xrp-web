@@ -1,6 +1,7 @@
 import React from "react";
 import { useGridStackContext } from "./lib/grid-stack-context";
 import { Dropdown, DropdownItem } from "flowbite-react";
+import type { IconType } from 'react-icons';
 import { MdSpeed } from 'react-icons/md';
 import { FaBatteryHalf, FaCog, FaEye, FaGlobe, FaPlug, FaPlus, FaSlidersH } from 'react-icons/fa';
 import { BsRulers } from 'react-icons/bs';
@@ -11,7 +12,7 @@ import { getCustomSensors } from "./sensors/customRegistry";
 
 interface BuiltinSensorDef {
   action: string;
-  icon: React.ComponentType<{ size?: number }>;
+  icon: IconType;
   titleKey: string;
   gridH: number;
   gridW: number;
@@ -81,7 +82,7 @@ const AddWidgets: React.FC = () => {
         {BUILTIN_SENSORS.map((def) => (
           <DropdownItem
             key={def.action}
-            icon={def.icon as any}
+            icon={def.icon}
             onClick={() => handleAddBuiltin(def)}
           >
             {t(def.titleKey)}

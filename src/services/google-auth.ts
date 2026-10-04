@@ -123,6 +123,10 @@ class GoogleAuthService {
     }
 
     private async initHandshake() {
+        // no backend url means there's nothing to call, so skip it
+        if (!this._googleAuthBackendUrl) {
+            return;
+        }
         try {
             const response = await fetch(`${this._googleAuthBackendUrl}/google-auth/handshake`, {
                 credentials: 'include', // Include cookies in cross-origin requests

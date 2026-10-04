@@ -138,7 +138,9 @@ pythonGenerator.forBlock['xrp_getrightencoder'] = function (block) {
 
 // Kids Movement
 // Distances entered by students are in inches. XRPLib DifferentialDrive
-// expects centimeters. Positive turn is clockwise/right; negative is left.
+// expects centimeters. Positive turn is counterclockwise/left; negative is right.
+// XRPLib's example comments say the opposite but they're wrong, turn() spins the
+// left wheel backward and the right wheel forward for a positive angle.
 // XRPLib uses the drivetrain encoders for straight() and the IMU for turn().
 function kidsDrivetrainSetup() {
   pythonGenerator.definitions_['import_drivetrain'] =
@@ -164,14 +166,14 @@ pythonGenerator.forBlock['xrp_kids_move_backward'] = function (block) {
 pythonGenerator.forBlock['xrp_kids_turn_left'] = function (block) {
   kidsDrivetrainSetup();
   var degrees = pythonGenerator.valueToCode(block, 'degrees', pythonGenerator.ORDER_ATOMIC) || '0';
-  var code = `differentialDrive.turn(-abs(${degrees}))\n`;
+  var code = `differentialDrive.turn(abs(${degrees}))\n`;
   return code;
 };
 
 pythonGenerator.forBlock['xrp_kids_turn_right'] = function (block) {
   kidsDrivetrainSetup();
   var degrees = pythonGenerator.valueToCode(block, 'degrees', pythonGenerator.ORDER_ATOMIC) || '0';
-  var code = `differentialDrive.turn(abs(${degrees}))\n`;
+  var code = `differentialDrive.turn(-abs(${degrees}))\n`;
   return code;
 };
 

@@ -44,6 +44,8 @@ downloads/
 eggs/
 .eggs/
 lib/
+# the lib/ rule above is for python but it also hides this folder, so keep it
+!/src/components/dashboard/lib/
 lib64/
 parts/
 sdist/

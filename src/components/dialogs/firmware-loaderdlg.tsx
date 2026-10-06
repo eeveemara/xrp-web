@@ -13,7 +13,7 @@ import {
     resolveInstall,
     type ResolvedInstall,
 } from '@/utils/firmware-loader';
-import logo from '@assets/images/xrpstickerbot.png';
+import logo from '@assets/images/team_logo.svg';
 import Button from '@/widgets/button';
 
 const ROOT_MANIFEST = 'index.json';
@@ -348,7 +348,7 @@ function FirmwareLoaderDlg({
             <header className="flex shrink-0 items-center justify-between gap-4 border-b border-mountain-mist-200 bg-curious-blue-700 px-2 py-1 dark:border-shark-700 dark:bg-mountain-mist-950">
                 <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5">
                     <div className="flex items-center gap-2">
-                        <img src={logo} alt="logo" width="100" height="50" />
+                        <img src={logo} alt="Team 5962 perSEVERE" className="h-[50px] w-auto" />
                         <div className="flex flex-col items-start">
                             <p className="text-xs font-semibold uppercase tracking-wider text-shark-100 dark:text-shark-400">
                                 {t('firmwareLoader')}

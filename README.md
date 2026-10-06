@@ -4,6 +4,37 @@ This repository contains the XRP Web application source code using React + TypeS
 
 The XRP software platform is an integrated development environment where you can develop your robotics software program using either the visual block programming paradigm or the Python language.
 
+## Team 5962: Girls in STEAM
+
+This is Team 5962's copy of XRPWeb. We added a kids mode with just a few big blocks so we can use it at outreach events.
+
+The app is live here, and there's nothing to install: https://eeveemara.github.io/xrp-web/
+
+| If you want to | Read this |
+|---|---|
+| coach a kid at a table | `docs/KIDS_ROBOTICS_STUDENT_GUIDE.md` |
+| see the 5 challenges | `docs/KIDS_ROBOTICS_CHALLENGES.md` |
+| see what to click, with pictures | `docs/GIS_STATION_GUIDE.md` |
+| print the course for a kid | `docs/Robot_Challenge.pdf` |
+| put new firmware on a robot | `docs/XRP_FIRMWARE.md` |
+| know how kids mode works, or turn it off | `docs/KIDS_ROBOTICS_EVENT.md` |
+
+### Changing the app
+
+Skip this unless you're editing the code. You need Node 20 or newer.
+
+```bash
+npm ci
+npm run stage:firmware -- v2.0.7
+npm run dev
+```
+
+The team colors are in `src/team-theme.css` and the 2 color lists at the top of `tailwind.config.js`.
+
+Run `npm run lint`, `npm test -- --run` and `npm run build` before you push. Whatever lands on `main` is live on the site a few minutes later, so check the Actions tab and make sure it went green.
+
+Everything below here is from the original XRPWeb project. If it says something different from this section, go with this section.
+
 ## 🚀 Installation & Setup
 
 ### Prerequisites

@@ -149,16 +149,8 @@ export default class AppMgr {
      * Start and Initialize system objects
      */
     public start(): void {
-        // onload theme selection
-        this.onThemeChange(
-            window.matchMedia('(prefers-color-scheme: dark)').matches ? Themes.DARK : Themes.LIGHT,
-        );
-        // listen to system theme change event
-        window
-            .matchMedia('(prefers-color-scheme: dark)')
-            .addEventListener('change', (e) =>
-                this.onThemeChange(e.matches ? Themes.DARK : Themes.LIGHT),
-            );
+        // start in light
+        this.onThemeChange(Themes.LIGHT);
         this._connectionMgr = new connecionMgr(this);
         const themeFromLocalStorage = localStorage.getItem('Theme')?.replace(/"/g, '');
         if (themeFromLocalStorage) {

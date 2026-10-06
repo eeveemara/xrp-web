@@ -1,0 +1,130 @@
+/* Team 5962 theme */
+
+@font-face {
+    font-family: 'Lato';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('./assets/fonts/lato-latin-400.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Lato';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('./assets/fonts/lato-latin-700.woff2') format('woff2');
+}
+
+:root {
+    --team-black: #110009;
+    --team-gold: #ffcc00;
+    --team-gold-deep: #caa200;
+
+    /* team font */
+    font-family: Lato, system-ui, 'Segoe UI', Helvetica, Arial, sans-serif;
+
+    color-scheme: light;
+}
+
+html.dark {
+    color-scheme: dark;
+}
+
+::selection {
+    background: var(--team-gold);
+    color: var(--team-black);
+}
+
+/* top bar */
+#root > header {
+    background-color: var(--team-black);
+    background-image: repeating-linear-gradient(
+        -45deg,
+        var(--team-gold) 0 8px,
+        var(--team-black) 8px 16px
+    );
+    background-size: 100% 4px;
+    background-position: left bottom;
+    background-repeat: no-repeat;
+}
+
+/* connect button */
+#connectBtn,
+#chooseDifferentXrpBtn {
+    background-color: var(--team-gold);
+    color: var(--team-black);
+    font-weight: 700;
+}
+
+#connectBtn:hover,
+#chooseDifferentXrpBtn:hover {
+    background-color: var(--team-gold-deep);
+}
+
+#chooseDifferentXrpBtn {
+    border-left-color: rgb(17 0 9 / 0.35);
+}
+
+/* run button */
+#runBtn.bg-chateau-green-500 {
+    color: var(--team-black);
+    font-weight: 700;
+}
+
+/* text on gold, light mode */
+html:not(.dark) .bg-curious-blue-300,
+html:not(.dark) .bg-curious-blue-400,
+html:not(.dark) .bg-matisse-300,
+html:not(.dark) .bg-matisse-400,
+html:not(.dark) .bg-matisse-500,
+html:not(.dark) .bg-matisse-600,
+html:not(.dark) .hover\:bg-curious-blue-300:hover,
+html:not(.dark) .hover\:bg-curious-blue-400:hover,
+html:not(.dark) .hover\:bg-matisse-300:hover,
+html:not(.dark) .hover\:bg-matisse-400:hover,
+html:not(.dark) .hover\:bg-matisse-500:hover,
+html:not(.dark) .hover\:bg-matisse-400:hover *,
+html:not(.dark) .hover\:bg-curious-blue-400:hover * {
+    color: var(--team-black) !important;
+}
+
+/* text on gold, both modes */
+.bg-curious-blue-500 {
+    color: var(--team-black) !important;
+}
+
+/* menu icons */
+html:not(.dark) #root > header .hover\:bg-matisse-400:hover img {
+    filter: brightness(0);
+}
+
+/* connect box, dark mode */
+html.dark .hover\:bg-matisse-300:hover {
+    background-color: var(--team-gold);
+}
+
+html.dark .hover\:bg-matisse-300:hover,
+html.dark .hover\:bg-matisse-300:hover * {
+    color: var(--team-black);
+}
+
+html.dark .hover\:bg-matisse-300:not(:hover) img {
+    filter: invert(1);
+}
+
+/* focus outline */
+html:not(.dark) .focus\:ring-curious-blue-400:focus,
+html:not(.dark) .focus\:ring-curious-blue-500:focus,
+html:not(.dark) .focus-visible\:ring-curious-blue-500:focus-visible {
+    --tw-ring-color: var(--team-black);
+}
+
+/* loading circles */
+.RCP__progress {
+    stroke: var(--team-black);
+}
+
+html.dark .RCP__progress {
+    stroke: var(--team-gold);
+}

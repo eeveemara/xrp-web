@@ -14,6 +14,11 @@ import { ThemeInit } from '../.flowbite-react/init';
 initAiBuddyAccess();
 applyBlocklyLocale(i18n.language);
 
+// only show the screen size label when running the dev server
+if (import.meta.env.DEV) {
+    document.body.classList.add('debug-screens');
+}
+
 function Root() {
     const [googleClientId, setGoogleClientId] = useState<string>('');
     const googleAuthBackendUrl = import.meta.env.GOOGLE_AUTH_URL;

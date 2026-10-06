@@ -77,6 +77,11 @@ export default defineConfig(({ mode }) => {
                 {
                     src: 'node_modules/gridstack/dist/gridstack.css',
                     dest: './node_modules/gridstack/dist/'
+                },
+                {
+                    // blockly loads these from the internet by default, copy them into the build
+                    src: 'node_modules/blockly/media/*',
+                    dest: 'blockly-media'
                 }        ]
         })],
         resolve: {

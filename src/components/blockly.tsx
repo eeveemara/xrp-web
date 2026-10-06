@@ -556,6 +556,8 @@ function BlocklyEditor({ tabId, tabName }: BlocklyEditorProps) {
             className="h-full"
             toolboxConfiguration={toolboxConfiguration}
             workspaceConfiguration={{
+                // use our own copy of the blockly images and sounds so it works without internet
+                media: 'blockly-media/',
                 move:{
                     scrollbars: {horizontal: true, vertical: true},
                     drag: true,

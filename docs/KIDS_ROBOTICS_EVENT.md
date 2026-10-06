@@ -25,8 +25,10 @@ The blocks generate calls to the existing XRPLib `DifferentialDrive` class:
 
 - Forward: `differentialDrive.straight(abs(inches) * 2.54)`
 - Backward: `differentialDrive.straight(-abs(inches) * 2.54)`
-- Left: `differentialDrive.turn(-abs(degrees))`
-- Right: `differentialDrive.turn(abs(degrees))`
+- Left: `differentialDrive.turn(abs(degrees))`
+- Right: `differentialDrive.turn(-abs(degrees))`
+
+In XRPLib a positive angle turns left (counterclockwise). The comments in XRPLib's own `drive_examples.py` say the opposite, so don't go by those.
 
 XRPLib's `straight()` uses the wheel encoders and its `turn()` uses the IMU by default. The Blockly layer does not implement its own PID or sensor-control algorithm.
 

@@ -4,8 +4,8 @@ Read these 2 first. They're the lesson.
 
 | Read this | For |
 |---|---|
-| `KIDS_ROBOTICS_STUDENT_GUIDE.md` | how to coach a kid without doing it for them |
-| `KIDS_ROBOTICS_CHALLENGES.md` | the 5 challenges, in order |
+| [KIDS_ROBOTICS_STUDENT_GUIDE.md](KIDS_ROBOTICS_STUDENT_GUIDE.md) | how to coach a kid without doing it for them |
+| [KIDS_ROBOTICS_CHALLENGES.md](KIDS_ROBOTICS_CHALLENGES.md) | the 5 challenges, in order |
 
 This page is just what to click. Nothing to install:
 
@@ -59,7 +59,7 @@ Pink is you. Yellow is the kid.
 
    ![Chrome's pop-up with the robot listed as Board in FS mode - Board CDC (COM3)](images/gis/station-5-pick-robot.png)
 
-4. The robot's ID shows up in the top bar. If **Update available** is there too, the firmware is old. Get someone on software, or see `XRP_FIRMWARE.md`.
+4. The robot's ID shows up in the top bar. If **Update available** is there too, the firmware is old. Get someone on software, or see [XRP_FIRMWARE.md](XRP_FIRMWARE.md).
 
    ![The top bar after connecting: the robot's ID, Switch to Bluetooth, and RUN](images/gis/station-6-connected.png)
 
@@ -87,7 +87,7 @@ Now it's their turn. Try really hard not to take the mouse.
 
 ## The challenges, on the screen
 
-What each challenge in `KIDS_ROBOTICS_CHALLENGES.md` looks like. Some kids have never used a mouse, so show them click and drag first.
+What each challenge in [KIDS_ROBOTICS_CHALLENGES.md](KIDS_ROBOTICS_CHALLENGES.md) looks like. Some kids have never used a mouse, so show them click and drag first.
 
 ### Challenge 1: Move the robot
 
@@ -139,7 +139,7 @@ Then drag the other blocks inside it.
 
 ### Challenge 5: Navigate the course
 
-This is the printed Robot Challenge handout.
+This is the printed [Robot Challenge handout](Robot_Challenge.pdf).
 
 ### The other 2 blocks
 
@@ -147,7 +147,7 @@ This is the printed Robot Challenge handout.
 
 ![The Sleep and Stop motors blocks in the Basic group](images/gis/blocks-basic.png)
 
-The Python behind the blocks is in `KIDS_ROBOTICS_EVENT.md`.
+The Python behind the blocks is in [KIDS_ROBOTICS_EVENT.md](KIDS_ROBOTICS_EVENT.md).
 
 ## Running it
 

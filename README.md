@@ -10,14 +10,16 @@ This is Team 5962's copy of XRPWeb. We added a kids mode with just a few big blo
 
 The app is live here, and there's nothing to install: https://eeveemara.github.io/xrp-web/
 
+These are also in the site's top menu, under **GiS Docs**.
+
 | If you want to | Read this |
 |---|---|
-| coach a kid at a table | `docs/KIDS_ROBOTICS_STUDENT_GUIDE.md` |
-| see the 5 challenges | `docs/KIDS_ROBOTICS_CHALLENGES.md` |
-| see what to click, with pictures | `docs/GIS_STATION_GUIDE.md` |
-| print the course for a kid | `docs/Robot_Challenge.pdf` |
-| put new firmware on a robot | `docs/XRP_FIRMWARE.md` |
-| know how kids mode works, or turn it off | `docs/KIDS_ROBOTICS_EVENT.md` |
+| coach a kid at a table | [docs/KIDS_ROBOTICS_STUDENT_GUIDE.md](docs/KIDS_ROBOTICS_STUDENT_GUIDE.md) |
+| see the 5 challenges | [docs/KIDS_ROBOTICS_CHALLENGES.md](docs/KIDS_ROBOTICS_CHALLENGES.md) |
+| see what to click, with pictures | [docs/GIS_STATION_GUIDE.md](docs/GIS_STATION_GUIDE.md) |
+| print the course for a kid | [docs/Robot_Challenge.pdf](docs/Robot_Challenge.pdf) |
+| put new firmware on a robot | [docs/XRP_FIRMWARE.md](docs/XRP_FIRMWARE.md) |
+| know how kids mode works, or turn it off | [docs/KIDS_ROBOTICS_EVENT.md](docs/KIDS_ROBOTICS_EVENT.md) |
 
 ### Changing the app
 

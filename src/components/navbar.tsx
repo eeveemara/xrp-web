@@ -1512,6 +1512,9 @@ function NavBar({ layoutref }: NavBarProps) {
         toggleDialog();
     }
 
+    // GiS Docs menu
+    const gisDocs = 'https://github.com/eeveemara/xrp-web/blob/main/docs/';
+
     const navItems: MenuDataItem[] = [
         {
             label: t('file'),
@@ -1623,6 +1626,41 @@ function NavBar({ layoutref }: NavBarProps) {
                     label: t('privacyPolicy'),
                     iconImage: privacy,
                     link: 'https://www.experiential.bot/privacy',
+                },
+            ],
+        },
+        {
+            label: 'GiS Docs',
+            children: [
+                {
+                    label: 'Station guide',
+                    iconImage: userguide,
+                    link: gisDocs + 'GIS_STATION_GUIDE.md',
+                },
+                {
+                    label: 'How to coach a kid',
+                    iconImage: curriculum,
+                    link: gisDocs + 'KIDS_ROBOTICS_STUDENT_GUIDE.md',
+                },
+                {
+                    label: 'The 5 challenges',
+                    iconImage: curriculum,
+                    link: gisDocs + 'KIDS_ROBOTICS_CHALLENGES.md',
+                },
+                {
+                    label: 'Robot Challenge handout (PDF)',
+                    iconImage: userguide,
+                    link: gisDocs + 'Robot_Challenge.pdf',
+                },
+                {
+                    label: 'XRP firmware',
+                    iconImage: firmwareLoaderIcon,
+                    link: gisDocs + 'XRP_FIRMWARE.md',
+                },
+                {
+                    label: 'How kids mode works',
+                    iconImage: curriculum,
+                    link: gisDocs + 'KIDS_ROBOTICS_EVENT.md',
                 },
             ],
         },

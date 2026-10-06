@@ -1633,11 +1633,6 @@ function NavBar({ layoutref }: NavBarProps) {
             label: 'GiS Docs',
             children: [
                 {
-                    label: 'Station guide',
-                    iconImage: userguide,
-                    link: gisDocs + 'GIS_STATION_GUIDE.md',
-                },
-                {
                     label: 'How to coach a kid',
                     iconImage: curriculum,
                     link: gisDocs + 'KIDS_ROBOTICS_STUDENT_GUIDE.md',
@@ -1648,19 +1643,24 @@ function NavBar({ layoutref }: NavBarProps) {
                     link: gisDocs + 'KIDS_ROBOTICS_CHALLENGES.md',
                 },
                 {
+                    label: 'How kids mode works',
+                    iconImage: curriculum,
+                    link: gisDocs + 'KIDS_ROBOTICS_EVENT.md',
+                },
+                {
                     label: 'Robot Challenge handout (PDF)',
                     iconImage: userguide,
                     link: gisDocs + 'Robot_Challenge.pdf',
                 },
                 {
+                    label: 'Station guide',
+                    iconImage: userguide,
+                    link: gisDocs + 'GIS_STATION_GUIDE.md',
+                },
+                {
                     label: 'XRP firmware',
                     iconImage: firmwareLoaderIcon,
                     link: gisDocs + 'XRP_FIRMWARE.md',
-                },
-                {
-                    label: 'How kids mode works',
-                    iconImage: curriculum,
-                    link: gisDocs + 'KIDS_ROBOTICS_EVENT.md',
                 },
             ],
         },

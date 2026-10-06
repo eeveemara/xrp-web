@@ -8,6 +8,7 @@
   "type": "module",
   "scripts": {
     "gen:firmware-manifests": "node scripts/gen-firmware-manifests.mjs",
+    "stage:firmware": "node scripts/stage-firmware-boards.mjs",
     "predev": "node scripts/gen-firmware-manifests.mjs",
     "dev": "vite",
     "prebuild": "node scripts/gen-firmware-manifests.mjs",

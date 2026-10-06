@@ -130,10 +130,6 @@ export function getLocalizedToolboxJson() {
     };
 }
 
-// Keep the full toolbox available to the plugin manager and instructor mode.
-// Existing code imports BlocklyConfigs.ToolboxJson.
-const ToolboxJson = FullToolboxJson;
-
 const FullToolboxJson = {
     kind: "categoryToolbox",
     "contents": [
@@ -754,6 +750,11 @@ const FullToolboxJson = {
     "id": "toolbox",
     "style": "display: none"
 };
+
+// Keep the full toolbox available to the plugin manager and instructor mode.
+// Existing code imports BlocklyConfigs.ToolboxJson.
+// this has to be below FullToolboxJson or the app crashes on load
+const ToolboxJson = FullToolboxJson;
 
 const BlocklyConfigs = {
     InitialJson,
